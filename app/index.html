@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lab 6 Shop</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Arial, sans-serif;
+        --border: #d5d9e2;
+        --ink: #18202f;
+        --muted: #5d6675;
+        --accent: #166534;
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      header {
+        background: #20324d;
+        color: #fff;
+        padding: 18px 32px;
+      }
+
+      main {
+        display: grid;
+        gap: 18px;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      section,
+      article {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 12px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      input,
+      select,
+      button {
+        min-height: 40px;
+        border-radius: 6px;
+        font: inherit;
+      }
+
+      input,
+      select {
+        border: 1px solid var(--border);
+        padding: 8px 10px;
+      }
+
+      button {
+        border: 0;
+        background: #1f5eff;
+        color: #fff;
+        cursor: pointer;
+        padding: 8px 14px;
+      }
+
+      button.secondary {
+        background: #46566f;
+      }
+
+      button:disabled {
+        background: #96a0b3;
+        cursor: not-allowed;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .product {
+        display: grid;
+        gap: 10px;
+      }
+
+      .price {
+        font-weight: 700;
+      }
+
+      .status {
+        min-height: 24px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      ul {
+        margin: 8px 0 0;
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Lab 6 Shop</h1>
+      <div data-testid="session-state">Гість</div>
+    </header>
+
+    <main>
+      <section aria-labelledby="register-title">
+        <h2 id="register-title">Реєстрація</h2>
+        <form id="register-form" class="grid">
+          <label>
+            Ім'я
+            <input data-testid="name-input" name="name" autocomplete="name" required />
+          </label>
+          <label>
+            Email
+            <input data-testid="email-input" name="email" type="email" autocomplete="email" required />
+          </label>
+          <label>
+            Пароль
+            <input data-testid="password-input" name="password" type="password" minlength="6" required />
+          </label>
+          <label>
+            Місто
+            <input data-testid="city-input" name="city" required />
+          </label>
+          <button data-testid="register-button" type="submit">Створити акаунт</button>
+        </form>
+        <p class="status" data-testid="register-status" aria-live="polite"></p>
+      </section>
+
+      <section aria-labelledby="catalog-title">
+        <h2 id="catalog-title">Каталог</h2>
+        <div class="toolbar">
+          <label>
+            Пошук товару
+            <input data-testid="search-input" type="search" placeholder="Наприклад: клавіатура" />
+          </label>
+          <button data-testid="search-button" type="button">Знайти</button>
+          <button class="secondary" data-testid="clear-search-button" type="button">Очистити</button>
+        </div>
+        <div id="products" class="grid" data-testid="products-list"></div>
+      </section>
+
+      <section aria-labelledby="cart-title">
+        <h2 id="cart-title">Кошик</h2>
+        <div data-testid="cart-empty" class="muted">Кошик порожній</div>
+        <ul data-testid="cart-items"></ul>
+        <p class="price">Разом: <span data-testid="cart-total">0</span> грн</p>
+      </section>
+
+      <section aria-labelledby="checkout-title">
+        <h2 id="checkout-title">Оформлення замовлення</h2>
+        <form id="checkout-form" class="grid">
+          <label>
+            Адреса доставки
+            <input data-testid="address-input" name="address" required />
+          </label>
+          <label>
+            Спосіб оплати
+            <select data-testid="payment-select" name="payment" required>
+              <option value="">Оберіть спосіб</option>
+              <option value="card">Картка</option>
+              <option value="cash">Оплата при отриманні</option>
+            </select>
+          </label>
+          <button data-testid="checkout-button" type="submit">Підтвердити замовлення</button>
+        </form>
+        <p class="status" data-testid="checkout-status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script>
+      const products = [
+        { id: 'keyboard', name: 'Механічна клавіатура', price: 2400, category: 'Аксесуари' },
+        { id: 'mouse', name: 'Бездротова миша', price: 950, category: 'Аксесуари' },
+        { id: 'monitor', name: 'Монітор 27 дюймів', price: 7200, category: 'Дисплеї' },
+        { id: 'headset', name: 'Ігрова гарнітура', price: 1800, category: 'Аудіо' },
+      ];
+
+      const state = {
+        user: null,
+        cart: [],
+        visibleProducts: products,
+      };
+
+      const formatPrice = (value) => new Intl.NumberFormat('uk-UA').format(value);
+
+      function renderProducts() {
+        const list = document.querySelector('[data-testid="products-list"]');
+        list.innerHTML = '';
+
+        state.visibleProducts.forEach((product) => {
+          const card = document.createElement('article');
+          card.className = 'product';
+          card.setAttribute('data-testid', `product-${product.id}`);
+          card.innerHTML = `
+            <h3>${product.name}</h3>
+            <div class="muted">${product.category}</div>
+            <div class="price">${formatPrice(product.price)} грн</div>
+            <label>
+              Колір
+              <select data-testid="color-${product.id}">
+                <option value="black">Чорний</option>
+                <option value="white">Білий</option>
+              </select>
+            </label>
+            <label>
+              Комплектація
+              <select data-testid="option-${product.id}">
+                <option value="standard">Стандарт</option>
+                <option value="premium">Преміум</option>
+              </select>
+            </label>
+            <button type="button" data-testid="add-${product.id}">Додати до кошика</button>
+          `;
+
+          card.querySelector('button').addEventListener('click', () => {
+            const color = card.querySelector(`[data-testid="color-${product.id}"]`).value;
+            const option = card.querySelector(`[data-testid="option-${product.id}"]`).value;
+            state.cart.push({ ...product, color, option });
+            renderCart();
+          });
+
+          list.appendChild(card);
+        });
+      }
+
+      function renderCart() {
+        const cartItems = document.querySelector('[data-testid="cart-items"]');
+        const empty = document.querySelector('[data-testid="cart-empty"]');
+        const total = document.querySelector('[data-testid="cart-total"]');
+
+        cartItems.innerHTML = '';
+        empty.hidden = state.cart.length > 0;
+
+        state.cart.forEach((item) => {
+          const row = document.createElement('li');
+          row.textContent = `${item.name}, ${item.color}, ${item.option} - ${formatPrice(item.price)} грн`;
+          cartItems.appendChild(row);
+        });
+
+        total.textContent = formatPrice(state.cart.reduce((sum, item) => sum + item.price, 0));
+      }
+
+      document.querySelector('#register-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        state.user = {
+          name: form.get('name'),
+          email: form.get('email'),
+          city: form.get('city'),
+        };
+        document.querySelector('[data-testid="session-state"]').textContent = `Користувач: ${state.user.name}`;
+        document.querySelector('[data-testid="register-status"]').textContent = 'Акаунт успішно створено';
+      });
+
+      document.querySelector('[data-testid="search-button"]').addEventListener('click', () => {
+        const query = document.querySelector('[data-testid="search-input"]').value.trim().toLowerCase();
+        state.visibleProducts = products.filter((product) => product.name.toLowerCase().includes(query));
+        renderProducts();
+      });
+
+      document.querySelector('[data-testid="clear-search-button"]').addEventListener('click', () => {
+        document.querySelector('[data-testid="search-input"]').value = '';
+        state.visibleProducts = products;
+        renderProducts();
+      });
+
+      document.querySelector('#checkout-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (!state.user) {
+          document.querySelector('[data-testid="checkout-status"]').textContent = 'Спочатку створіть акаунт';
+          return;
+        }
+
+        if (state.cart.length === 0) {
+          document.querySelector('[data-testid="checkout-status"]').textContent = 'Додайте товар до кошика';
+          return;
+        }
+
+        const total = state.cart.reduce((sum, item) => sum + item.price, 0);
+        document.querySelector('[data-testid="checkout-status"]').textContent =
+          `Замовлення підтверджено для ${state.user.name}. Сума: ${formatPrice(total)} грн`;
+      });
+
+      renderProducts();
+    </script>
+  </body>
+</html>
